@@ -4,7 +4,7 @@ stages:
   - deploy
 
 variables:
-  REGISTRY: cr.yandex/crp1vivveopa749mspbf
+  REGISTRY: cr.yandex/crplv5314jih4ohi8o28
   DOCKER_TLS_CERTDIR: ""
   IMAGE_TAG: $CI_COMMIT_SHORT_SHA
 
