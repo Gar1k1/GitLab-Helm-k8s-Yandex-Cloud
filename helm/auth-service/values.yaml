@@ -1,0 +1,20 @@
+replicaCount: 1
+
+image:
+  repository: cr.yandex/crp1vivveopa749mspbf/auth-service
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8081
+
+ingress:
+  enabled: true
+  annotations: 
+    nginx.ingress.kubernetes.io/rewrite-target: /
+  hosts:
+    - host: auth.your-domain.com
+      paths:
+        - /
+  tls: []

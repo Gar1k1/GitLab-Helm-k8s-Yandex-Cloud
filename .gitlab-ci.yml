@@ -1,0 +1,57 @@
+stages:
+  - build
+  - push
+  - deploy
+
+variables:
+  REGISTRY: cr.yandex/crp1vivveopa749mspbf
+  DOCKER_TLS_CERTDIR: ""
+  IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+
+default:
+  before_script:
+    - echo "$YANDEX_OAUTH_TOKEN" | docker login -u oauth --password-stdin cr.yandex
+    - mkdir -p ~/.kube
+    - echo "$KUBECONFIG_DATA" | base64 -d > ~/.kube/config
+
+build-auth:
+  stage: build
+  script:
+    - docker build -t $REGISTRY/auth-service:$IMAGE_TAG piggymetrics-k8s/auth-service
+    - docker tag $REGISTRY/auth-service:$IMAGE_TAG $REGISTRY/auth-service:latest
+  only:
+    changes:
+      - piggymetrics-k8s/auth-service/**
+
+build-gateway:
+  stage: build
+  script:
+    - docker build -t $REGISTRY/gateway:$IMAGE_TAG piggymetrics-k8s/gateway
+    - docker tag $REGISTRY/gateway:$IMAGE_TAG $REGISTRY/gateway:latest
+  only:
+    changes:
+      - piggymetrics-k8s/gateway/**
+
+push-auth:
+  stage: push
+  script:
+    - docker push $REGISTRY/auth-service:$IMAGE_TAG
+    - docker push $REGISTRY/auth-service:latest
+  needs: ["build-auth"]
+
+push-gateway:
+  stage: push
+  script:
+    - docker push $REGISTRY/gateway:$IMAGE_TAG
+    - docker push $REGISTRY/gateway:latest
+  needs: ["build-gateway"]
+
+deploy:
+  stage: deploy
+  script:
+    - helm upgrade --install auth-service ./helm/auth-service --set image.tag=$IMAGE_TAG
+    - helm upgrade --install gateway ./helm3/gateway --set image.tag=$IMAGE_TAG
+  environment:
+    name: production
+  only:
+    - main

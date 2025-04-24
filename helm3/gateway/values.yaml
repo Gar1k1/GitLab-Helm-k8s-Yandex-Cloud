@@ -1,0 +1,10 @@
+image:
+  repository: cr.yandex/crp1vivveopa749mspbf/gateway
+  tag: latest
+
+  pullPolicy: Always
+
+service:
+  port: 8080
+
+resources: {}
