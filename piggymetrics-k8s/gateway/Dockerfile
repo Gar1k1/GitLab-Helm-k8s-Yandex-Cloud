@@ -1,14 +1,20 @@
-FROM eclipse-temurin:17-jdk-jammy as builder
+# Этап сборки
+FROM eclipse-temurin:21-jdk-jammy AS builder
 
 WORKDIR /app
 
-# Копируем pom.xml и запускаем сборку зависимостей
-COPY pom.xml .
-RUN mvn dependency:go-offline
-
-# Копируем исходный код и собираем проект
+COPY pom.xml ./
 COPY src ./src
-RUN mvn package -DskipTests
 
-# Запускаем приложение
-CMD ["java", "-jar", "target/gateway-1.0-SNAPSHOT.jar"]
+RUN ./mvnw package -DskipTests
+
+# Этап продакшн
+FROM eclipse-temurin:21-jre-jammy
+
+WORKDIR /app
+
+COPY --from=builder /app/target/*.jar app.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", "-jar", "app.jar"]
