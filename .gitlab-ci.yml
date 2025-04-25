@@ -4,54 +4,52 @@ stages:
   - deploy
 
 variables:
-  REGISTRY: cr.yandex/crp1vivveopa749mspbf
-  DOCKER_TLS_CERTDIR: ""
   IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+  DOCKER_IMAGE: "cr.yandex/$YCR_REGISTRY_ID/$YCR_REPO/gateway"
 
 default:
+  image: docker:latest
+  services:
+    - docker:dind
   before_script:
-    - echo "$YANDEX_OAUTH_TOKEN" | docker login -u oauth --password-stdin cr.yandex
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin cr.yandex
     - mkdir -p ~/.kube
-    - echo "$KUBECONFIG_DATA" | base64 -d > ~/.kube/config
-
-build-auth:
-  stage: build
-  script:
-    - docker build -t $REGISTRY/auth-service:$IMAGE_TAG piggymetrics-k8s/auth-service
-    - docker tag $REGISTRY/auth-service:$IMAGE_TAG $REGISTRY/auth-service:latest
-  only:
-    changes:
-      - piggymetrics-k8s/auth-service/**
+    - echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config
+  tags:
+    - my-gitlab-runner
 
 build-gateway:
   stage: build
   script:
-    - docker build -t $REGISTRY/gateway:$IMAGE_TAG piggymetrics-k8s/gateway
-    - docker tag $REGISTRY/gateway:$IMAGE_TAG $REGISTRY/gateway:latest
-  only:
-    changes:
-      - piggymetrics-k8s/gateway/**
-
-push-auth:
-  stage: push
-  script:
-    - docker push $REGISTRY/auth-service:$IMAGE_TAG
-    - docker push $REGISTRY/auth-service:latest
-  needs: ["build-auth"]
+    - docker build -t $DOCKER_IMAGE:$IMAGE_TAG -f ./piggymetrics-k8s/gateway/Dockerfile ./piggymetrics-k8s/gateway
+    - docker tag $DOCKER_IMAGE:$IMAGE_TAG $DOCKER_IMAGE:latest
+  tags:
+    - my-gitlab-runner
 
 push-gateway:
   stage: push
   script:
-    - docker push $REGISTRY/gateway:$IMAGE_TAG
-    - docker push $REGISTRY/gateway:latest
-  needs: ["build-gateway"]
+    - docker push $DOCKER_IMAGE:$IMAGE_TAG
+    - docker push $DOCKER_IMAGE:latest
+  needs:
+    - build-gateway
+  tags:
+    - my-gitlab-runner
 
-deploy:
+deploy-gateway:
   stage: deploy
   script:
-    - helm upgrade --install auth-service ./helm/auth-service --set image.tag=$IMAGE_TAG
-    - helm upgrade --install gateway ./helm3/gateway --set image.tag=$IMAGE_TAG
-  environment:
-    name: production
+    - helm upgrade --install gateway ./HELM-CHARTS/helm3/gateway \
+        --set image.repository=$DOCKER_IMAGE \
+        --set image.tag=$IMAGE_TAG \
+        --set image.pullPolicy=Always \
+        --set service.port=8080 \
+        --set ingress.enabled=true \
+        --set ingress.hosts[0].host=gateway.spring-petclinic-project.ru \
+        --set ingress.hosts[0].paths[0]=/
   only:
     - main
+  environment:
+    name: production
+  tags:
+    - my-gitlab-runner

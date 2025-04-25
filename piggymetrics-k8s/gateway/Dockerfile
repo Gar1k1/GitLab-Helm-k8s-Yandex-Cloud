@@ -1,14 +1,14 @@
-FROM eclipse-temurin:17-jdk-jammy as builder
+# Используем базовый образ
+FROM eclipse-temurin:21-jdk-jammy AS builder
 
+# Устанавливаем рабочую директорию
 WORKDIR /app
 
-# Копируем pom.xml и запускаем сборку зависимостей
-COPY pom.xml .
-RUN mvn dependency:go-offline
+# Копируем pom.xml для установки зависимостей (если нужно)
+COPY pom.xml ./
 
-# Копируем исходный код и собираем проект
-COPY src ./src
-RUN mvn package -DskipTests
+# Копируем скомпилированный артефакт из папки target
+COPY target/your-artifact.jar ./your-app.jar
 
-# Запускаем приложение
-CMD ["java", "-jar", "target/gateway-1.0-SNAPSHOT.jar"]
+# Запуск приложения
+CMD ["java", "-jar", "./your-app.jar"]
