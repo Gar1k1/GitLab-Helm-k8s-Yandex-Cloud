@@ -19,7 +19,7 @@ default:
 build-gateway:
   stage: build
   script:
-    - docker build -t $DOCKER_IMAGE:$IMAGE_TAG -f HELM-CHARTS/piggymetrics-k8s/gateway/Dockerfile HELM-CHARTS/piggymetrics-k8s/gateway
+    - docker build -t $DOCKER_IMAGE:$IMAGE_TAG -f ./HELM-CHARTS/piggymetrics-k8s/gateway/Dockerfile ./HELM-CHARTS/piggymetrics-k8s/gateway
     - docker tag $DOCKER_IMAGE:$IMAGE_TAG $DOCKER_IMAGE:latest
   tags:
     - my-gitlab-runner
