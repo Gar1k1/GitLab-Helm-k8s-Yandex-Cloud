@@ -29,6 +29,8 @@ push-gateway:
     - docker push $DOCKER_IMAGE:latest
   needs:
     - build-gateway
+  tags:
+    - my-gitlab-runner
 
 deploy-gateway:
   stage: deploy
