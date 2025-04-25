@@ -6,3 +6,13 @@ ingress:
     - host: gateway.spring-petclinic-project.ru
       paths:
         - /
+
+replicaCount: 1
+
+image:
+  repository: cr.yandex/my-docker-registry/gateway
+  tag: latest
+  pullPolicy: Always
+
+service:
+  port: 8080

@@ -1,16 +1,24 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: {{ include "gateway.fullname" . | quote }}  # Добавлен quote
+  name: {{ include "gateway.fullname" . | quote }}
+  annotations:
+    {{- if .Values.ingress.annotations }}
+    {{- toYaml .Values.ingress.annotations | nindent 4 }}
+    {{- end }}
 spec:
   rules:
-    - host: {{ .Values.ingress.hosts[0].host | quote }}
+    {{- range .Values.ingress.hosts }}
+    - host: {{ .host | quote }}
       http:
         paths:
-          - path: {{ .Values.ingress.hosts[0].paths[0] | quote }}
+          {{- range .paths }}
+          - path: {{ . | quote }}
             pathType: Prefix
             backend:
               service:
-                name: {{ include "gateway.fullname" . | quote }}
+                name: {{ include "gateway.fullname" $ }}
                 port:
-                  number: {{ .Values.service.port }}
+                  number: {{ $.Values.service.port }}
+          {{- end }}
+    {{- end }}
