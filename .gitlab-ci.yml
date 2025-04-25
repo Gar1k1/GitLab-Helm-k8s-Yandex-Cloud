@@ -19,7 +19,16 @@ default:
 build-gateway:
   stage: build
   script:
-    - docker build -t $DOCKER_IMAGE:$IMAGE_TAG -f Yandex-Cloud-K8s/HELM-CHARTS/piggymetrics-k8s/gateway/Dockerfile Yandex-Cloud-K8s/HELM-CHARTS/piggymetrics-k8s/gateway
+   before_script:
+  - echo "Current working directory: $(pwd)"
+  - echo "Listing files in current directory:"
+  - ls -R
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin cr.yandex
+  - mkdir -p ~/.kube
+  - echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config
+  - echo "Building Docker image..."
+  - docker build -t "$DOCKER_IMAGE:$IMAGE_TAG" -f "Yandex-Cloud-K8s/HELM-CHARTS/piggymetrics-k8s/gateway/Dockerfile" "Yandex-Cloud-K8s/HELM-CHARTS/piggymetrics-k8s/gateway"
+
     - docker tag $DOCKER_IMAGE:$IMAGE_TAG $DOCKER_IMAGE:latest
   tags:
     - my-gitlab-runner
