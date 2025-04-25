@@ -1,20 +1,14 @@
-# Этап сборки
+# Используем базовый образ
 FROM eclipse-temurin:21-jdk-jammy AS builder
 
+# Устанавливаем рабочую директорию
 WORKDIR /app
 
+# Копируем pom.xml для установки зависимостей (если нужно)
 COPY pom.xml ./
-COPY src ./src
 
-RUN ./mvnw package -DskipTests
+# Копируем скомпилированный артефакт из папки target
+COPY target/your-artifact.jar ./your-app.jar
 
-# Этап продакшн
-FROM eclipse-temurin:21-jre-jammy
-
-WORKDIR /app
-
-COPY --from=builder /app/target/*.jar app.jar
-
-EXPOSE 8080
-
-ENTRYPOINT ["java", "-jar", "app.jar"]
+# Запуск приложения
+CMD ["java", "-jar", "./your-app.jar"]
