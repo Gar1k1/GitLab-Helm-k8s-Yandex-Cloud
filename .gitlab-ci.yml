@@ -19,40 +19,29 @@ default:
 build-gateway:
   stage: build
   script:
-    - echo "Current working directory: $(pwd)"
-    - echo "Listing files in current directory:"
-    - ls -R .
-    - echo "Building Docker image..."
-    - docker build -t "$DOCKER_IMAGE:$IMAGE_TAG" -f "Yandex-Cloud-K8s/HELM-CHARTS/piggymetrics-k8s/gateway/Dockerfile" "Yandex-Cloud-K8s/HELM-CHARTS/piggymetrics-k8s/gateway"
-    - docker tag "$DOCKER_IMAGE:$IMAGE_TAG" "$DOCKER_IMAGE:latest"
-  tags:
-    - my-gitlab-runner
+    - docker build -t $DOCKER_IMAGE:$IMAGE_TAG -f /home/garik/Yandex-Cloud-K8s/HELM-CHARTS/piggymetrics-k8s/gateway/Dockerfile HELM-CHARTS/piggymetrics-k8s/gateway
+    - docker tag $DOCKER_IMAGE:$IMAGE_TAG $DOCKER_IMAGE:latest
 
 push-gateway:
   stage: push
   script:
-    - docker push "$DOCKER_IMAGE:$IMAGE_TAG"
-    - docker push "$DOCKER_IMAGE:latest"
+    - docker push $DOCKER_IMAGE:$IMAGE_TAG
+    - docker push $DOCKER_IMAGE:latest
   needs:
     - build-gateway
-  tags:
-    - my-gitlab-runner
 
 deploy-gateway:
   stage: deploy
   script:
-    - helm upgrade --install gateway ./Yandex-Cloud-K8s/HELM-CHARTS/helm3/gateway \
-        --set image.repository="$DOCKER_IMAGE" \
-        --set image.tag="$IMAGE_TAG" \
+    - helm upgrade --install gateway ./HELM-CHARTS/helm3/gateway \
+        --set image.repository=$DOCKER_IMAGE \
+        --set image.tag=$IMAGE_TAG \
         --set image.pullPolicy=Always \
         --set service.port=8080 \
         --set ingress.enabled=true \
         --set ingress.hosts[0].host=gateway.spring-petclinic-project.ru \
-        --set ingress.hosts[0].paths[0].path="/" \
-        --set ingress.hosts[0].paths[0].pathType=Prefix
+        --set ingress.hosts[0].paths[0]=/
   only:
     - main
   environment:
     name: production
-  tags:
-    - my-gitlab-runner
