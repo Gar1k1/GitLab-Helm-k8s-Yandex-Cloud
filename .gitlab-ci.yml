@@ -14,15 +14,6 @@ default:
     - mkdir -p ~/.kube
     - echo "$KUBECONFIG_DATA" | base64 -d > ~/.kube/config
 
-build-auth:
-  stage: build
-  script:
-    - docker build -t $REGISTRY/auth-service:$IMAGE_TAG piggymetrics-k8s/auth-service
-    - docker tag $REGISTRY/auth-service:$IMAGE_TAG $REGISTRY/auth-service:latest
-  only:
-    changes:
-      - piggymetrics-k8s/auth-service/**
-
 build-gateway:
   stage: build
   script:
@@ -31,13 +22,6 @@ build-gateway:
   only:
     changes:
       - piggymetrics-k8s/gateway/**
-
-push-auth:
-  stage: push
-  script:
-    - docker push $REGISTRY/auth-service:$IMAGE_TAG
-    - docker push $REGISTRY/auth-service:latest
-  needs: ["build-auth"]
 
 push-gateway:
   stage: push
