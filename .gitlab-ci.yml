@@ -39,17 +39,26 @@ push-gateway:
 deploy-gateway:
   stage: deploy
   script:
-    - helm upgrade --install gateway ./HELM-CHARTS/helm3/gateway \
-        --set image.repository=$DOCKER_IMAGE \
-        --set image.tag=$IMAGE_TAG \
+    - pwd
+    - ls -la
+    - mkdir -p ./HELM-CHARTS
+    - cp -r /home/garik/Yandex-Cloud-K8s/HELM-CHARTS/helm3 ./HELM-CHARTS/helm3
+    - ls -la ./HELM-CHARTS/helm3
+    - mkdir -p ~/.kube
+    - echo "$KUBE_CONFIG" | base64 -d > ~/.kube/config
+    - kubectl config use-context yc-k8s-cluster-ilrybj92
+    - |
+      helm upgrade --install gateway ./HELM-CHARTS/helm3 \
+        --set image.repository="$DOCKER_IMAGE" \
+        --set image.tag="$IMAGE_TAG" \
         --set image.pullPolicy=Always \
         --set service.port=8080 \
         --set ingress.enabled=true \
         --set ingress.hosts[0].host=gateway.spring-petclinic-project.ru \
         --set ingress.hosts[0].paths[0]=/
-  only:
-    - main
   environment:
     name: production
+  only:
+    - main
   tags:
     - my-gitlab-runner
